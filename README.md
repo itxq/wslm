@@ -14,12 +14,24 @@ pip install wslm
 wslm port info
 
 # show
+Ports Info:
 +---------------+------------+----------------+-------------+
 | ListenAddress | ListenPort | ConnectAddress | ConnectPort |
 +---------------+------------+----------------+-------------+
 |    0.0.0.0    |    3306    |  172.23.60.88  |     3306    |
-|    0.0.0.0    |    3307    |  172.23.60.88  |     3307    |
+|    0.0.0.0    |    6379    |  172.23.60.88  |     6379    |
 +---------------+------------+----------------+-------------+
+
+NetFireWallRules Info:
++-------------------------------------+-----------+--------+---------+
+|             DisplayName             | Direction | Action | Enabled |
++-------------------------------------+-----------+--------+---------+
+| WSL 2 Firewall Unlock Outbound 3306 |  Outbound | Allow  |   True  |
+|  WSL 2 Firewall Unlock Inbound 3306 |  Inbound  | Allow  |   True  |
+| WSL 2 Firewall Unlock Outbound 6379 |  Outbound | Allow  |   True  |
+|  WSL 2 Firewall Unlock Inbound 6379 |  Inbound  | Allow  |   True  |
++-------------------------------------+-----------+--------+---------+
+
 ```
 
 ### Add Ports
