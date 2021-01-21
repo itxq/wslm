@@ -214,11 +214,26 @@ class WindowsCommandArgParse:
         """
 
         windows_command_port = WindowsCommandPort()
+        windows_command_fire_wall = WindowsCommandFireWall()
         port_info = windows_command_port.info(power_shell=namespace.power_shell)
-        table = PrettyTable(['ListenAddress', 'ListenPort', 'ConnectAddress', 'ConnectPort'])
+        port_info_table = PrettyTable(['ListenAddress', 'ListenPort', 'ConnectAddress', 'ConnectPort'])
         for item in port_info:
-            table.add_row([v for k, v in item.items()])
-        print(Color.green(str(table)))
+            port_info_table.add_row([v for k, v in item.items()])
+        wall_info = windows_command_fire_wall.info(power_shell=namespace.power_shell)
+        wall_info_table = PrettyTable(['DisplayName', 'Direction', 'Action', 'Enabled'])
+        for item in wall_info:
+            wall_info_table.add_row([
+                item.get('DisplayName'),
+                item.get('Direction'),
+                item.get('Action'),
+                item.get('Enabled'),
+            ])
+        print('')
+        print(Color.cyan('Ports Info:'))
+        print(Color.green(port_info_table))
+        print('')
+        print(Color.cyan('NetFireWallRules Info:'))
+        print(Color.green(wall_info_table))
 
     @staticmethod
     def get_fire_wall_rule_args(wall):
