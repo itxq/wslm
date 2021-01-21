@@ -29,6 +29,7 @@ class WindowsCommandBase:
         _result = subprocess.Popen(
             cmd,
             shell=True,
+            stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
             bufsize=-1,
             encoding=encoding
@@ -199,7 +200,8 @@ class WindowsCommandFireWall(WindowsCommandBase):
                 _line = _result.get(line[1], None)
                 if not _line:
                     _result[line[1]] = {}
-            _result[cur_name][line[0]] = line[1]
+            if cur_name is not None:
+                _result[cur_name][line[0]] = line[1]
 
         return [v for k, v in _result.items()]
 
