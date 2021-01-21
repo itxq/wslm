@@ -1,6 +1,14 @@
 WSL Management Tool
 ===============
 
+### Repository
+
+【Coding】[https://e.coding.net/xqitw/wslm/wslm.git](https://xqitw.coding.net/public/wslm/wslm/git/files)
+
+【Gitee】[https://gitee.com/itxq/wslm.git](https://gitee.com/itxq/wslm.git)
+
+【GitHub】[https://github.com/itxq/wslm.git](https://github.com/itxq/wslm.git)
+
 ### Installation
 
 ```shell
