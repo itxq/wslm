@@ -50,7 +50,7 @@ class WindowsCommandArgParse:
             '--wall',
             type=str,
             nargs='*',
-            default='ALL',
+            default=WindowsCommandFireWall.FIRE_WALL_RULE_ALL,
             choices=WindowsCommandFireWall.WALL_TYPES,
             help='with firewall'
         )
@@ -71,16 +71,26 @@ class WindowsCommandArgParse:
             '--wall',
             type=str,
             nargs='*',
-            default='ALL',
+            default=WindowsCommandFireWall.FIRE_WALL_RULE_ALL,
             choices=WindowsCommandFireWall.WALL_TYPES,
             help='with firewall'
         )
         port_del.set_defaults(func=self.port_del_callback)
 
-    @staticmethod
-    def port_add_callback(namespace, parser, *args, **kwargs):
+    def port_add_callback(self, namespace, parser, *args, **kwargs):
+        """
+        添加端口回调
+        :param namespace:
+        :param parser:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
         windows_command_port = WindowsCommandPort()
         windows_command_fire_wall = WindowsCommandFireWall()
+        namespace.wall = self.get_fire_wall_rule_args(namespace.wall)
+        namespace.port = list(set(namespace.port))
         for port in namespace.port:
             windows_command_port.add(port=port, power_shell=namespace.power_shell)
             if namespace.wall is None:
@@ -94,10 +104,20 @@ class WindowsCommandArgParse:
                 windows_command_fire_wall.add_out(port=port, power_shell=namespace.power_shell)
                 windows_command_fire_wall.add_in(port=port, power_shell=namespace.power_shell)
 
-    @staticmethod
-    def port_del_callback(namespace, parser, *args, **kwargs):
+    def port_del_callback(self, namespace, parser, *args, **kwargs):
+        """
+        删除端口回调
+        :param namespace:
+        :param parser:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
         windows_command_port = WindowsCommandPort()
         windows_command_fire_wall = WindowsCommandFireWall()
+        namespace.wall = self.get_fire_wall_rule_args(namespace.wall)
+        namespace.port = list(set(namespace.port))
         for port in namespace.port:
             windows_command_port.delete(port=port, power_shell=namespace.power_shell)
             if namespace.wall is None:
@@ -110,6 +130,12 @@ class WindowsCommandArgParse:
             else:
                 windows_command_fire_wall.delete_out(port=port, power_shell=namespace.power_shell)
                 windows_command_fire_wall.delete_in(port=port, power_shell=namespace.power_shell)
+
+    @staticmethod
+    def get_fire_wall_rule_args(wall):
+        if not isinstance(wall, list):
+            return None
+        return list(set(wall))
 
     def run(self):
         self._parser_cmd_port()

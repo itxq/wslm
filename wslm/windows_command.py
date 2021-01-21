@@ -155,8 +155,9 @@ class WindowsCommandFireWall(WindowsCommandBase):
 
     FIRE_WALL_RULE_IN = 'Inbound'
 
+    FIRE_WALL_RULE_ALL = 'ALL'
+
     WALL_TYPES = [
-        'ALL',
         FIRE_WALL_RULE_IN,
         FIRE_WALL_RULE_OUT
     ]
