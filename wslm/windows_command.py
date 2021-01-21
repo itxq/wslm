@@ -187,7 +187,7 @@ class WindowsCommandFireWall(WindowsCommandBase):
             power_shell=power_shell
         )
 
-        result_string = self.run_cmd(cmd, encoding='utf8').splitlines()
+        result_string = self.run_cmd(cmd).splitlines()
         _result = {}
         cur_name = None
         for key, line in enumerate(result_string):
