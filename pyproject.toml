@@ -1,8 +1,43 @@
 [tool.poetry]
 name = "wslm"
 version = "0.1.0"
-description = ""
+description = "在WSL中执行Windows10系统命令，用于端口转发，防火墙管理"
+license = "Apache-2.0"
 authors = ["IT小强xqitw.cn <mail@xqitw.cn>"]
+maintainers = ["IT小强xqitw.cn <mail@xqitw.cn>"]
+readme = "README.md"
+homepage = "https://xqitw.coding.net/public/wslm/wslm/git"
+repository = "https://e.coding.net/xqitw/wslm/wslm.git"
+documentation = "https://xqitw.coding.net/public/wslm/wslm/git"
+keywords = [
+    'wsl',
+    'windows',
+    'linux',
+]
+classifiers = [
+    # 发展时期,常见的如下
+    #   3 - Alpha
+    #   4 - Beta
+    #   5 - Production/Stable
+    'Development Status :: 3 - Alpha',
+    # 开发的目标用户
+    'Intended Audience :: Developers',
+    # 语言
+    "Natural Language :: Chinese (Simplified)",
+    # 许可证信息
+    "License :: OSI Approved :: Apache Software License",
+    # 目标 Python 版本
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    # 框架
+    "Framework :: Django :: 3.1",
+]
+
+packages = [
+    { include = "wslm" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.6"
