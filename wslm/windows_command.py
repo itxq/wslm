@@ -167,11 +167,43 @@ class WindowsCommandFireWall(WindowsCommandBase):
 
     WALL_NAME = 'WSL 2 Firewall Unlock'
 
-    CMD_WALL_ADD = "{power_shell} \"New-NetFireWallRule -DisplayName '{wall_name}' -Direction '{wall_type}' -LocalPort {port} -Action Allow -Protocol TCP\""
+    CMD_WALL_ADD = "{power_shell} \"New-NetFireWallRule -DisplayName '{name}' -group '{group}' -Direction '{type}' -LocalPort {port} -Action Allow -Protocol TCP\""
 
-    CMD_WALL_DEL = "{power_shell} \"Remove-NetFireWallRule -DisplayName '{wall_name}'\""
+    CMD_WALL_DEL = "{power_shell} \"Remove-NetFireWallRule -DisplayName '{name}'\""
 
-    def add_in(self, port: int, power_shell: str):
+    CMD_WALL_INFO = "{power_shell} \"Get-NetFirewallRule -Group '{group}'\""
+
+    def info(self, group=WALL_NAME, power_shell: str = WindowsCommandBase.POWER_SHELL):
+        """
+        获取防火墙信息
+        :param group:
+        :param power_shell:
+        :return:
+        """
+
+        cmd = self.CMD_WALL_INFO.format(
+            group=group,
+            power_shell=power_shell
+        )
+
+        result_string = self.run_cmd(cmd, encoding='utf8').splitlines()
+        _result = {}
+        cur_name = None
+        for key, line in enumerate(result_string):
+            line = line.split(':')
+            line = [i.strip() for i in line]
+            if len(line) != 2:
+                continue
+            if line[0] == 'Name':
+                cur_name = line[1]
+                _line = _result.get(line[1], None)
+                if not _line:
+                    _result[line[1]] = {}
+            _result[cur_name][line[0]] = line[1]
+
+        return [v for k, v in _result.items()]
+
+    def add_in(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
         """
         添加入方向防火墙
         :param port:
@@ -181,7 +213,7 @@ class WindowsCommandFireWall(WindowsCommandBase):
         cmd = self.__get_cmd_wall_inbound_add(port=port, power_shell=power_shell)
         return self.run_cmd(cmd)
 
-    def add_out(self, port: int, power_shell: str):
+    def add_out(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
         """
         添加出方向防火墙
         :param port:
@@ -191,7 +223,7 @@ class WindowsCommandFireWall(WindowsCommandBase):
         cmd = self.__get_cmd_wall_outbound_add(port=port, power_shell=power_shell)
         return self.run_cmd(cmd)
 
-    def delete_in(self, port: int, power_shell: str):
+    def delete_in(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
         """
         删除入方向防火墙
         :param port:
@@ -201,7 +233,7 @@ class WindowsCommandFireWall(WindowsCommandBase):
         cmd = self.__get_cmd_wall_inbound_del(port=port, power_shell=power_shell)
         return self.run_cmd(cmd)
 
-    def delete_out(self, port: int, power_shell: str):
+    def delete_out(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
         """
         删除出方向防火墙
         :param port:
@@ -239,9 +271,10 @@ class WindowsCommandFireWall(WindowsCommandBase):
         """
 
         cmd = self.CMD_WALL_ADD.format(
-            wall_name='{name} {port} {type}'.format(name=self.WALL_NAME, port=port, type=wall_type),
+            name='{name} {type} {port}'.format(name=self.WALL_NAME, port=port, type=wall_type),
             port=port,
-            wall_type=wall_type,
+            type=wall_type,
+            group=self.WALL_NAME,
             power_shell=power_shell,
         )
         return cmd
@@ -276,7 +309,7 @@ class WindowsCommandFireWall(WindowsCommandBase):
         """
 
         cmd = self.CMD_WALL_DEL.format(
-            wall_name='{name} {port} {type}'.format(name=self.WALL_NAME, port=port, type=wall_type),
+            name='{name} {type} {port}'.format(name=self.WALL_NAME, port=port, type=wall_type),
             power_shell=power_shell,
         )
 
