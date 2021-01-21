@@ -41,6 +41,7 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.6"
+prettytable = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 
