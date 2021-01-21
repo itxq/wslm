@@ -34,7 +34,10 @@ class WindowsCommandBase:
             encoding=encoding
         )
         _result.wait()
-        data = _result.stdout.read()
+        try:
+            data = _result.stdout.read()
+        except UnicodeDecodeError:
+            data = ''
         return data
 
 
