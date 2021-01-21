@@ -1,6 +1,36 @@
 import argparse
 
+from prettytable import PrettyTable
+
 from .windows_command import WindowsCommandBase, WindowsCommandPort, WindowsCommandFireWall
+
+
+class Color:
+    """
+    控制台字体颜色更改
+    """
+
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BlUE = '\033[94m'
+    END = '\033[0m'
+
+    @classmethod
+    def red(cls, string):
+        return cls.RED + str(string) + cls.END
+
+    @classmethod
+    def green(cls, string):
+        return cls.GREEN + str(string) + cls.END
+
+    @classmethod
+    def yellow(cls, string):
+        return cls.YELLOW + str(string) + cls.END
+
+    @classmethod
+    def cyan(cls, string):
+        return cls.BlUE + str(string) + cls.END
 
 
 class WindowsCommandArgParse:
@@ -34,6 +64,23 @@ class WindowsCommandArgParse:
         )
 
         port.set_defaults(func=lambda *args, **kwargs: port.print_help())
+
+        # # 端口信息查询
+        port_info = port_subparsers.add_parser('info', help='ports info')
+        port_info.set_defaults(func=self.port_info_callback)
+
+        # # 重置所有端口转发
+        reset_info = port_subparsers.add_parser('reset', help='reset ports')
+        reset_info.add_argument(
+            '-w',
+            '--wall',
+            type=str,
+            nargs='*',
+            default=WindowsCommandFireWall.FIRE_WALL_RULE_ALL,
+            choices=WindowsCommandFireWall.WALL_TYPES,
+            help='with firewall'
+        )
+        reset_info.set_defaults(func=self.port_reset_callback)
 
         # # 添加端口转发
         port_add = port_subparsers.add_parser('add', help='add ports')
@@ -103,6 +150,7 @@ class WindowsCommandArgParse:
             else:
                 windows_command_fire_wall.add_out(port=port, power_shell=namespace.power_shell)
                 windows_command_fire_wall.add_in(port=port, power_shell=namespace.power_shell)
+        self.port_info_callback(namespace, parser, *args, **kwargs)
 
     def port_del_callback(self, namespace, parser, *args, **kwargs):
         """
@@ -130,6 +178,47 @@ class WindowsCommandArgParse:
             else:
                 windows_command_fire_wall.delete_out(port=port, power_shell=namespace.power_shell)
                 windows_command_fire_wall.delete_in(port=port, power_shell=namespace.power_shell)
+        self.port_info_callback(namespace, parser, *args, **kwargs)
+
+    def port_reset_callback(self, namespace, parser, *args, **kwargs):
+        """
+        重置所有端口转发
+        :param namespace:
+        :param parser:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
+        windows_command_port = WindowsCommandPort()
+        port_info = windows_command_port.info(power_shell=namespace.power_shell)
+        ports = [i['connect_port'] for i in port_info]
+        namespace.port = ports
+        self.port_del_callback(namespace, parser, *args, **kwargs)
+        # windows_command_port = WindowsCommandPort()
+        # windows_command_port.reset(power_shell=namespace.power_shell)
+        # namespace.wall = self.get_fire_wall_rule_args(namespace.wall)
+        # if namespace.wall is not None:
+        #     pass
+        # self.port_info_callback(namespace, parser, *args, **kwargs)
+
+    @staticmethod
+    def port_info_callback(namespace, parser, *args, **kwargs):
+        """
+        查询端口转发信息
+        :param namespace:
+        :param parser:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
+        windows_command_port = WindowsCommandPort()
+        port_info = windows_command_port.info(power_shell=namespace.power_shell)
+        table = PrettyTable(['ListenAddress', 'ListenPort', 'ConnectAddress', 'ConnectPort'])
+        for item in port_info:
+            table.add_row([v for k, v in item.items()])
+        print(Color.green(str(table)))
 
     @staticmethod
     def get_fire_wall_rule_args(wall):

@@ -7,6 +7,21 @@ WSL Management Tool
 pip install wslm
 ```
 
+### Ports info
+
+```shell
+# view ports info
+wslm port info
+
+# show
++---------------+------------+----------------+-------------+
+| ListenAddress | ListenPort | ConnectAddress | ConnectPort |
++---------------+------------+----------------+-------------+
+|    0.0.0.0    |    3306    |  172.23.60.88  |     3306    |
+|    0.0.0.0    |    3307    |  172.23.60.88  |     3307    |
++---------------+------------+----------------+-------------+
+```
+
 ### Add Ports
 
 ```shell
@@ -31,4 +46,11 @@ wslm port del -p 3306 3307 -w
 wslm port del -p 3306 3307 -w Inbound
 # del ports with firewall Outbound
 wslm port del -p 3306 3307 -w Outbound
+```
+
+### Reset Ports
+
+```shell
+# reset ports
+wslm port reset
 ```
