@@ -14,7 +14,7 @@ class WindowsCommandArgParse:
         """
 
         self._parser = argparse.ArgumentParser(prog='wslm')
-        self._subparsers = self._parser.add_subparsers(help='可选命令')
+        self._subparsers = self._parser.add_subparsers(title='available commands')
         self._parser.add_argument(
             '-s',
             '--power_shell',
@@ -27,22 +27,22 @@ class WindowsCommandArgParse:
         # windows10 端口转发管理
         port = self._subparsers.add_parser(
             name='port',
-            help='windows10 端口转发管理'
+            help='connect and listen wsl ports'
         )
         port_subparsers = port.add_subparsers(
-            help='windows10 端口转发管理'
+            help='connect and listen wsl ports'
         )
 
         port.set_defaults(func=lambda *args, **kwargs: port.print_help())
 
         # # 添加端口转发
-        port_add = port_subparsers.add_parser('add', help='添加端口转发')
+        port_add = port_subparsers.add_parser('add', help='add ports')
         port_add.add_argument(
             '-p',
             '--port',
             type=int,
             nargs='*',
-            help='端口号',
+            help='ports',
             required=True
         )
         port_add.add_argument(
@@ -50,19 +50,20 @@ class WindowsCommandArgParse:
             '--wall',
             type=str,
             nargs='*',
+            default='ALL',
             choices=WindowsCommandFireWall.WALL_TYPES,
-            help='防火墙'
+            help='with firewall'
         )
         port_add.set_defaults(func=self.port_add_callback)
 
         # # 删除端口转发
-        port_del = port_subparsers.add_parser('del', help='删除端口转发')
+        port_del = port_subparsers.add_parser('del', help='delete ports')
         port_del.add_argument(
             '-p',
             '--port',
             type=int,
             nargs='*',
-            help='端口号',
+            help='ports',
             required=True
         )
         port_del.add_argument(
@@ -70,8 +71,9 @@ class WindowsCommandArgParse:
             '--wall',
             type=str,
             nargs='*',
+            default='ALL',
             choices=WindowsCommandFireWall.WALL_TYPES,
-            help='防火墙'
+            help='with firewall'
         )
         port_del.set_defaults(func=self.port_del_callback)
 
@@ -110,6 +112,7 @@ class WindowsCommandArgParse:
                 windows_command_fire_wall.delete_in(port=port, power_shell=namespace.power_shell)
 
     def run(self):
+        self._parser_cmd_port()
         # 解析参数，并执行回调方法
         _args = self._parser.parse_args()
         _func = getattr(_args, 'func', None)
