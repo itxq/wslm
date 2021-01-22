@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wslm"
-version = "0.1.2"
+version = "0.2.0"
 description = "在WSL中执行Windows10系统命令，用于端口转发，防火墙管理"
 license = "Apache-2.0"
 authors = ["IT小强xqitw.cn <mail@xqitw.cn>"]
