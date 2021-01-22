@@ -15,6 +15,25 @@ WSL Management Tool
 pip install wslm
 ```
 
+### Help
+
+```shell
+# eg:
+wslm -h
+wslm port -h
+wslm port add -h
+```
+
+### Base
+
+```shell
+# set encoding , PowerShell.exe PATH
+wslm -e utf-8 -s PowerShell.exe
+# eg:
+wslm -e utf-8 -s PowerShell.exe port add -p 3306 3307 -w
+wslm -e gbk -s PowerShell.exe port add -p 3306 3307 -w
+```
+
 ### Ports info
 
 ```shell
@@ -73,4 +92,6 @@ wslm port del -p 3306 3307 -w Outbound
 ```shell
 # reset ports
 wslm port reset
+# reset ports with firewall
+wslm port reset -w
 ```
