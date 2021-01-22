@@ -3,7 +3,7 @@ import subprocess
 
 from prettytable import PrettyTable
 
-from wslm.util import Color
+from .util import Color
 
 
 class WindowsCommandBase:
