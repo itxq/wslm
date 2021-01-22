@@ -224,7 +224,6 @@ class WindowsCommandFireWall(WindowsCommandBase):
         wall_info = self.info(group=group)
         wall_info_table = PrettyTable(
             field_names=['DisplayName', 'Direction', 'Action', 'Enabled'],
-            title='NetFireWallRules Info',
             min_table_width=70,
         )
         for item in wall_info:
