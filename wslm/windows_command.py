@@ -3,6 +3,8 @@ import subprocess
 
 from prettytable import PrettyTable
 
+from wslm.util import Color
+
 
 class WindowsCommandBase:
     """
@@ -23,7 +25,9 @@ class WindowsCommandBase:
         :param cmd:
         :return:
         """
-
+        pre_str = Color.red('Exec')
+        cmd_str = Color.yellow(cmd)
+        print(f'{pre_str} : {cmd_str}')
         _result = subprocess.Popen(
             cmd,
             shell=True,
