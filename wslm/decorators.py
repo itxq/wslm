@@ -70,14 +70,12 @@ def __add_wall(namespace, parser, *args, **kwargs):
             encoding=namespace.encoding,
             power_shell=namespace.power_shell
         )
-        for port in namespace.port:
-            for wall in namespace.wall:
-                if wall == windows_command_fire_wall.FIRE_WALL_RULE_OUT:
-                    windows_command_fire_wall.add_out(port=port)
-                elif wall == windows_command_fire_wall.FIRE_WALL_RULE_IN:
-                    windows_command_fire_wall.add_in(port=port)
-            else:
-                windows_command_fire_wall.add(port=port)
+        if windows_command_fire_wall.FIRE_WALL_RULE_OUT in namespace.wall:
+            return list(map(lambda port: windows_command_fire_wall.add_out(port=port), namespace.port))
+        elif windows_command_fire_wall.FIRE_WALL_RULE_IN in namespace.wall:
+            return list(map(lambda port: windows_command_fire_wall.add_in(port=port), namespace.port))
+        else:
+            return list(map(lambda port: windows_command_fire_wall.add(port=port), namespace.port))
 
 
 def __del_wall(namespace, parser, *args, **kwargs):
@@ -97,14 +95,12 @@ def __del_wall(namespace, parser, *args, **kwargs):
             encoding=namespace.encoding,
             power_shell=namespace.power_shell
         )
-        for port in namespace.port:
-            for wall in namespace.wall:
-                if wall == windows_command_fire_wall.FIRE_WALL_RULE_OUT:
-                    windows_command_fire_wall.delete_out(port=port)
-                elif wall == windows_command_fire_wall.FIRE_WALL_RULE_IN:
-                    windows_command_fire_wall.delete_in(port=port)
-            else:
-                windows_command_fire_wall.delete(port=port)
+        if windows_command_fire_wall.FIRE_WALL_RULE_OUT in namespace.wall:
+            return list(map(lambda port: windows_command_fire_wall.delete_out(port=port), namespace.port))
+        elif windows_command_fire_wall.FIRE_WALL_RULE_IN in namespace.wall:
+            return list(map(lambda port: windows_command_fire_wall.delete_in(port=port), namespace.port))
+        else:
+            return list(map(lambda port: windows_command_fire_wall.delete(port=port), namespace.port))
 
 
 def print_port_info(func):
