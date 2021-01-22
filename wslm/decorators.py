@@ -1,6 +1,6 @@
 from functools import wraps
 
-from .util import Color
+from .util import Color, get_fire_wall_rule_args
 from .windows_command import WindowsCommandPort, WindowsCommandFireWall
 
 
@@ -36,7 +36,84 @@ def __print_wall_info(namespace, parser, *args, **kwargs):
     print(Color.green(wall_info_table))
 
 
+def __reset_wall(namespace, parser, *args, **kwargs):
+    """
+    重置防火墙
+    :param namespace:
+    :param parser:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+    namespace.wall = get_fire_wall_rule_args(namespace.wall)
+    if namespace.wall is not None:
+        WindowsCommandFireWall(
+            encoding=namespace.encoding,
+            power_shell=namespace.power_shell
+        ).reset()
+
+
+def __add_wall(namespace, parser, *args, **kwargs):
+    """
+    添加防火墙
+    :param namespace:
+    :param parser:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+
+    namespace.port = list(set(namespace.port))
+    namespace.wall = get_fire_wall_rule_args(namespace.wall)
+    if namespace.wall is not None:
+        windows_command_fire_wall = WindowsCommandFireWall(
+            encoding=namespace.encoding,
+            power_shell=namespace.power_shell
+        )
+        for port in namespace.port:
+            for wall in namespace.wall:
+                if wall == windows_command_fire_wall.FIRE_WALL_RULE_OUT:
+                    windows_command_fire_wall.add_out(port=port)
+                elif wall == windows_command_fire_wall.FIRE_WALL_RULE_IN:
+                    windows_command_fire_wall.add_in(port=port)
+            else:
+                windows_command_fire_wall.add(port=port)
+
+
+def __del_wall(namespace, parser, *args, **kwargs):
+    """
+    删除防火墙
+    :param namespace:
+    :param parser:
+    :param args:
+    :param kwargs:
+    :return:
+    """
+
+    namespace.port = list(set(namespace.port))
+    namespace.wall = get_fire_wall_rule_args(namespace.wall)
+    if namespace.wall is not None:
+        windows_command_fire_wall = WindowsCommandFireWall(
+            encoding=namespace.encoding,
+            power_shell=namespace.power_shell
+        )
+        for port in namespace.port:
+            for wall in namespace.wall:
+                if wall == windows_command_fire_wall.FIRE_WALL_RULE_OUT:
+                    windows_command_fire_wall.delete_out(port=port)
+                elif wall == windows_command_fire_wall.FIRE_WALL_RULE_IN:
+                    windows_command_fire_wall.delete_in(port=port)
+            else:
+                windows_command_fire_wall.delete(port=port)
+
+
 def print_port_info(func):
+    """
+    输出端口转发信息到控制台
+    :param func:
+    :return:
+    """
+
     @wraps(func)
     def __wraps(*args, **kwargs):
         _result = func(*args, **kwargs)
@@ -47,6 +124,12 @@ def print_port_info(func):
 
 
 def print_wall_info(func):
+    """
+    输出防火墙信息到控制台
+    :param func:
+    :return:
+    """
+
     @wraps(func)
     def __wraps(*args, **kwargs):
         _result = func(*args, **kwargs)
@@ -56,12 +139,49 @@ def print_wall_info(func):
     return __wraps
 
 
-def print_port_wall_info(func):
+def wall_reset(func):
+    """
+    重置防火墙
+    :param func:
+    :return:
+    """
+
     @wraps(func)
     def __wraps(*args, **kwargs):
         _result = func(*args, **kwargs)
-        __print_port_info(**kwargs)
-        __print_wall_info(**kwargs)
+        __reset_wall(**kwargs)
+        return _result
+
+    return __wraps
+
+
+def wall_add(func):
+    """
+    添加防火墙
+    :param func:
+    :return:
+    """
+
+    @wraps(func)
+    def __wraps(*args, **kwargs):
+        _result = func(*args, **kwargs)
+        __add_wall(**kwargs)
+        return _result
+
+    return __wraps
+
+
+def wall_del(func):
+    """
+    删除防火墙
+    :param func:
+    :return:
+    """
+
+    @wraps(func)
+    def __wraps(*args, **kwargs):
+        _result = func(*args, **kwargs)
+        __del_wall(**kwargs)
         return _result
 
     return __wraps

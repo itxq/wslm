@@ -1,38 +1,36 @@
 import re
 import subprocess
 
+from prettytable import PrettyTable
+
 
 class WindowsCommandBase:
     """
     命令基类
     """
 
+    CMD_ENCODING = 'gbk'
+
     POWER_SHELL = 'PowerShell.exe'
 
-    IPV4_PATTERN = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+    def __init__(self, encoding=CMD_ENCODING, power_shell: str = POWER_SHELL):
+        self._cmd_encoding = encoding
+        self._power_shell = power_shell
 
-    @classmethod
-    def get_wsl_ip(cls):
+    def run_cmd(self, cmd: str) -> str:
         """
-        获取WSL2的IP
+        执行命令，并返回结果
+        :param cmd:
         :return:
         """
 
-        wsl_cmd = "ifconfig eth0 | grep 'inet '"
-
-        _result = cls.run_cmd(cmd=wsl_cmd)
-        wsl_ip = re.search(cls.IPV4_PATTERN, _result).group(0)
-        return wsl_ip
-
-    @classmethod
-    def run_cmd(cls, cmd: str, encoding='gbk'):
         _result = subprocess.Popen(
             cmd,
             shell=True,
             stderr=subprocess.STDOUT,
             stdout=subprocess.PIPE,
             bufsize=-1,
-            encoding=encoding
+            encoding=self._cmd_encoding
         )
         _result.wait()
         try:
@@ -40,6 +38,26 @@ class WindowsCommandBase:
         except UnicodeDecodeError:
             data = ''
         return data
+
+
+class WindowsCommandLinux(WindowsCommandBase):
+    """
+    linux子系统
+    """
+
+    IPV4_PATTERN = r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+
+    def get_wsl_ip(self) -> str:
+        """
+        获取WSL的IP
+        :return:
+        """
+
+        wsl_cmd = "ifconfig eth0 | grep 'inet '"
+
+        _result = self.run_cmd(cmd=wsl_cmd)
+        wsl_ip = re.search(self.IPV4_PATTERN, _result).group(0)
+        return wsl_ip
 
 
 class WindowsCommandPort(WindowsCommandBase):
@@ -57,8 +75,28 @@ class WindowsCommandPort(WindowsCommandBase):
 
     CMD_PORT_RESET = '{pre} reset'
 
-    def info(self, power_shell: str = WindowsCommandBase.POWER_SHELL):
-        cmd = self.CMD_PORT_INFO.format(pre=self.__get_cmd_port_pre(power_shell=power_shell))
+    def info_table(self):
+        """
+        获取端口转发信息，以 PrettyTable 格式返回
+        :return:
+        """
+
+        port_info = self.info()
+        port_info_table = PrettyTable(
+            field_names=['ListenAddress', 'ListenPort', 'ConnectAddress', 'ConnectPort'],
+            min_table_width=72,
+        )
+        for item in port_info:
+            port_info_table.add_row([v for k, v in item.items()])
+        return port_info_table
+
+    def info(self):
+        """
+        获取端口转发信息
+        :return:
+        """
+
+        cmd = self.CMD_PORT_INFO.format(pre=self.__get_cmd_port_pre())
         result_string = self.run_cmd(cmd).splitlines()
         _result = []
         for key, line in enumerate(result_string):
@@ -74,76 +112,72 @@ class WindowsCommandPort(WindowsCommandBase):
                 })
         return _result
 
-    def add(self, port: int, addr: str = '0.0.0.0', ip: str = '', power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def add(self, port: int, addr: str = '0.0.0.0', ip: str = ''):
         """
         添加端口
         :param port:
         :param addr:
         :param ip:
-        :param power_shell:
         :return:
         """
 
-        cmd = self.__get_cmd_port_add(port=port, addr=addr, ip=ip, power_shell=power_shell)
+        cmd = self.__get_cmd_port_add(port=port, addr=addr, ip=ip)
         return self.run_cmd(cmd)
 
-    def delete(self, port: int, addr: str = '0.0.0.0', power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def delete(self, port: int, addr: str = '0.0.0.0'):
         """
         删除端口
         :param port:
         :param addr:
-        :param power_shell:
         :return:
         """
 
-        cmd = self.__get_cmd_port_del(port=port, addr=addr, power_shell=power_shell)
+        cmd = self.__get_cmd_port_del(port=port, addr=addr)
         return self.run_cmd(cmd)
 
-    def reset(self, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def reset(self):
         """
         清除所有的端口转发
-        :param power_shell:
         :return:
         """
 
-        cmd = self.CMD_PORT_RESET.format(pre=self.__get_cmd_port_pre(power_shell=power_shell))
+        cmd = self.CMD_PORT_RESET.format(pre=self.__get_cmd_port_pre())
         return self.run_cmd(cmd)
 
-    def __get_cmd_port_pre(self, power_shell: str) -> str:
+    def __get_cmd_port_pre(self) -> str:
         cmd = self.CMD_PORT_PRE.format(
-            power_shell=power_shell
+            power_shell=self._power_shell
         )
         return cmd
 
-    def __get_cmd_port_add(self, port: int, addr: str, ip: str, power_shell: str) -> str:
+    def __get_cmd_port_add(self, port: int, addr: str, ip: str) -> str:
         """
         获取添加端口转发的命令字符串
         :param port: 要转发的端口
         :param addr: 监听地址
         :param ip: 监听IP，为空时自动获取wsl的ip
-        :param power_shell: PowerShell.exe 路径
         :return:
         """
 
+        ip = ip if ip else WindowsCommandLinux(encoding=self._cmd_encoding, power_shell=self._power_shell).get_wsl_ip()
         cmd = self.CMD_PORT_ADD.format(
-            pre=self.__get_cmd_port_pre(power_shell=power_shell),
+            pre=self.__get_cmd_port_pre(),
             port=port,
             addr=addr,
-            ip=ip if ip else self.get_wsl_ip()
+            ip=ip
         )
         return cmd
 
-    def __get_cmd_port_del(self, port: int, addr: str, power_shell: str) -> str:
+    def __get_cmd_port_del(self, port: int, addr: str) -> str:
         """
         获取删除端口转发的命令字符串
         :param port: 要转发的端口
         :param addr: 监听地址
-        :param power_shell: PowerShell.exe 路径
         :return:
         """
 
         cmd = self.CMD_PORT_DEL.format(
-            pre=self.__get_cmd_port_pre(power_shell=power_shell),
+            pre=self.__get_cmd_port_pre(),
             port=port,
             addr=addr,
         )
@@ -174,17 +208,40 @@ class WindowsCommandFireWall(WindowsCommandBase):
 
     CMD_WALL_INFO = "{power_shell} \"Get-NetFirewallRule -Group '{group}'\""
 
-    def info(self, group=WALL_NAME, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    CMD_WALL_RESET = "{power_shell} \"Remove-NetFireWallRule -Group '{group}'\""
+
+    def info_table(self, group=WALL_NAME):
+        """
+        获取防火墙信息，以 PrettyTable 格式返回
+        :param group:
+        :return:
+        """
+
+        wall_info = self.info(group=group)
+        wall_info_table = PrettyTable(
+            field_names=['DisplayName', 'Direction', 'Action', 'Enabled'],
+            title='NetFireWallRules Info',
+            min_table_width=70,
+        )
+        for item in wall_info:
+            wall_info_table.add_row([
+                item.get('DisplayName'),
+                item.get('Direction'),
+                item.get('Action'),
+                item.get('Enabled'),
+            ])
+        return wall_info_table
+
+    def info(self, group=WALL_NAME):
         """
         获取防火墙信息
         :param group:
-        :param power_shell:
         :return:
         """
 
         cmd = self.CMD_WALL_INFO.format(
             group=group,
-            power_shell=power_shell
+            power_shell=self._power_shell,
         )
 
         result_string = self.run_cmd(cmd).splitlines()
@@ -205,70 +262,93 @@ class WindowsCommandFireWall(WindowsCommandBase):
 
         return [v for k, v in _result.items()]
 
-    def add_in(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def add(self, port: int):
+        """
+        添加向防火墙
+        :param port:
+        :return:
+        """
+        return self.add_in(port=port) + self.add_out(port=port)
+
+    def add_in(self, port: int):
         """
         添加入方向防火墙
         :param port:
-        :param power_shell:
         :return:
         """
-        cmd = self.__get_cmd_wall_inbound_add(port=port, power_shell=power_shell)
+        cmd = self.__get_cmd_wall_inbound_add(port=port)
         return self.run_cmd(cmd)
 
-    def add_out(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def add_out(self, port: int):
         """
         添加出方向防火墙
         :param port:
-        :param power_shell:
         :return:
         """
-        cmd = self.__get_cmd_wall_outbound_add(port=port, power_shell=power_shell)
+        cmd = self.__get_cmd_wall_outbound_add(port=port)
         return self.run_cmd(cmd)
 
-    def delete_in(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def delete(self, port: int):
+        """
+        删除防火墙
+        :param port:
+        :return:
+        """
+        return self.delete_in(port=port) + self.delete_out(port=port)
+
+    def delete_in(self, port: int):
         """
         删除入方向防火墙
         :param port:
-        :param power_shell:
         :return:
         """
-        cmd = self.__get_cmd_wall_inbound_del(port=port, power_shell=power_shell)
+        cmd = self.__get_cmd_wall_inbound_del(port=port)
         return self.run_cmd(cmd)
 
-    def delete_out(self, port: int, power_shell: str = WindowsCommandBase.POWER_SHELL):
+    def delete_out(self, port: int):
         """
         删除出方向防火墙
         :param port:
-        :param power_shell:
         :return:
         """
-        cmd = self.__get_cmd_wall_outbound_del(port=port, power_shell=power_shell)
+        cmd = self.__get_cmd_wall_outbound_del(port=port)
         return self.run_cmd(cmd)
 
-    def __get_cmd_wall_inbound_add(self, port: int, power_shell: str) -> str:
+    def reset(self, group=WALL_NAME):
+        """
+        清除所有的防火墙
+        :param group:
+        :return:
+        """
+
+        cmd = self.CMD_WALL_RESET.format(
+            group=group,
+            power_shell=self._power_shell,
+        )
+
+        return self.run_cmd(cmd)
+
+    def __get_cmd_wall_inbound_add(self, port: int) -> str:
         """
         获取添加入方向防火墙命令字符串
         :param port:
-        :param power_shell:
         :return:
         """
-        return self.__get_cmd_wall_add(port=port, wall_type=self.FIRE_WALL_RULE_IN, power_shell=power_shell)
+        return self.__get_cmd_wall_add(port=port, wall_type=self.FIRE_WALL_RULE_IN)
 
-    def __get_cmd_wall_outbound_add(self, port: int, power_shell: str) -> str:
+    def __get_cmd_wall_outbound_add(self, port: int) -> str:
         """
         获取添加出方向防火墙命令字符串
         :param port:
-        :param power_shell:
         :return:
         """
-        return self.__get_cmd_wall_add(port=port, wall_type=self.FIRE_WALL_RULE_OUT, power_shell=power_shell)
+        return self.__get_cmd_wall_add(port=port, wall_type=self.FIRE_WALL_RULE_OUT)
 
-    def __get_cmd_wall_add(self, port: int, wall_type: str, power_shell: str) -> str:
+    def __get_cmd_wall_add(self, port: int, wall_type: str) -> str:
         """
         获取添加防火墙命令字符串
         :param port:
         :param wall_type:
-        :param power_shell:
         :return:
         """
 
@@ -277,42 +357,39 @@ class WindowsCommandFireWall(WindowsCommandBase):
             port=port,
             type=wall_type,
             group=self.WALL_NAME,
-            power_shell=power_shell,
+            power_shell=self._power_shell,
         )
         return cmd
 
-    def __get_cmd_wall_inbound_del(self, port: int, power_shell: str) -> str:
+    def __get_cmd_wall_inbound_del(self, port: int) -> str:
         """
         获取删除入方向防火墙命令字符串
         :param port:
-        :param power_shell:
         :return:
         """
 
-        return self.__get_cmd_wall_del(port=port, wall_type=self.FIRE_WALL_RULE_IN, power_shell=power_shell)
+        return self.__get_cmd_wall_del(port=port, wall_type=self.FIRE_WALL_RULE_IN)
 
-    def __get_cmd_wall_outbound_del(self, port: int, power_shell: str) -> str:
+    def __get_cmd_wall_outbound_del(self, port: int) -> str:
         """
         获取删除出方向防火墙命令字符串
         :param port:
-        :param power_shell:
         :return:
         """
 
-        return self.__get_cmd_wall_del(port=port, wall_type=self.FIRE_WALL_RULE_OUT, power_shell=power_shell)
+        return self.__get_cmd_wall_del(port=port, wall_type=self.FIRE_WALL_RULE_OUT)
 
-    def __get_cmd_wall_del(self, port: int, wall_type: str, power_shell: str) -> str:
+    def __get_cmd_wall_del(self, port: int, wall_type: str) -> str:
         """
         获取删除防火墙命令字符串
         :param port:
         :param wall_type:
-        :param power_shell:
         :return:
         """
 
         cmd = self.CMD_WALL_DEL.format(
             name='{name} {type} {port}'.format(name=self.WALL_NAME, port=port, type=wall_type),
-            power_shell=power_shell,
+            power_shell=self._power_shell,
         )
 
         return cmd

@@ -1,3 +1,9 @@
+def get_fire_wall_rule_args(wall):
+    if not isinstance(wall, list):
+        return None
+    return list(set(wall))
+
+
 class Color:
     """
     控制台字体颜色更改
